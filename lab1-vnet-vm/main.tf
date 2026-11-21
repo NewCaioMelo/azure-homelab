@@ -1,14 +1,26 @@
 terraform {
+  required_version = ">= 1.5"
+
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
       version = "~> 4.0"
     }
   }
+
+  # State remoto no Azure Storage (criado por bootstrap/criar-backend.sh)
+  backend "azurerm" {
+    resource_group_name  = "rg-tfstate"
+    storage_account_name = "sttfstate63a9f3"
+    container_name       = "tfstate"
+    key                  = "lab1-vnet-vm.tfstate"
+    use_azuread_auth     = true
+  }
 }
 
 provider "azurerm" {
   features {}
+  resource_provider_registrations = "none"
 }
 
 resource "azurerm_resource_group" "lab" {

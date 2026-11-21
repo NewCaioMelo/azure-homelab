@@ -1,0 +1,88 @@
+name: Terraform - Lab 1
+
+on:
+  push:
+    branches: [main]
+    paths: ["lab1-vnet-vm/**", ".github/workflows/terraform-lab1.yml"]
+  pull_request:
+    paths: ["lab1-vnet-vm/**", ".github/workflows/terraform-lab1.yml"]
+  workflow_dispatch:
+    inputs:
+      acao:
+        description: "Ação"
+        type: choice
+        options: [plan, apply, destroy]
+        default: plan
+
+permissions:
+  id-token: write   # necessário para o OIDC (login sem senha no Azure)
+  contents: read
+
+env:
+  ARM_USE_OIDC: "true"
+  ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  TF_VAR_meu_ip: ${{ secrets.MEU_IP }}
+  TF_VAR_ssh_public_key: ${{ vars.SSH_PUBLIC_KEY }}
+  TF_IN_AUTOMATION: "true"
+
+defaults:
+  run:
+    working-directory: lab1-vnet-vm
+
+jobs:
+  plan:
+    name: fmt, validate e plan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.17.2
+
+      - name: terraform fmt
+        run: terraform fmt -check -recursive
+
+      - name: terraform init
+        run: terraform init -input=false
+
+      - name: terraform validate
+        run: terraform validate
+
+      - name: terraform plan
+        run: terraform plan -input=false -no-color -out=plano
+
+      - name: Resumo do plano
+        run: |
+          {
+            echo "## Terraform plan - Lab 1"
+            echo '```'
+            terraform show -no-color plano | tail -n 40
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  aplicar:
+    name: ${{ inputs.acao }}
+    needs: plan
+    if: github.event_name == 'workflow_dispatch' && inputs.acao != 'plan'
+    runs-on: ubuntu-latest
+    environment: lab
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.17.2
+
+      - name: terraform init
+        run: terraform init -input=false
+
+      - name: terraform apply
+        if: inputs.acao == 'apply'
+        run: terraform apply -input=false -auto-approve
+
+      - name: terraform destroy
+        if: inputs.acao == 'destroy'
+        run: terraform destroy -input=false -auto-approve

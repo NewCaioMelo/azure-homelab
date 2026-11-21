@@ -1,5 +1,22 @@
 variable "meu_ip" {
-  type = string
+  description = "IP público (CIDR /32) autorizado a acessar a VM por SSH"
+  type        = string
+}
+
+variable "tamanho" {
+  description = "Tamanho da VM"
+  type        = string
+  default     = "Standard_B2ats_v2"
+}
+
+variable "ssh_public_key" {
+  description = "Chave SSH pública. Se vazio, usa ~/.ssh/id_ed25519.pub (execução local)"
+  type        = string
+  default     = ""
+}
+
+locals {
+  ssh_public_key = coalesce(var.ssh_public_key, try(file(pathexpand("~/.ssh/id_ed25519.pub")), null))
 }
 
 resource "azurerm_network_security_rule" "ssh" {
@@ -47,7 +64,7 @@ resource "azurerm_linux_virtual_machine" "web" {
 
   admin_ssh_key {
     username   = "caio"
-    public_key = file("~/.ssh/id_ed25519.pub")
+    public_key = local.ssh_public_key
   }
 
   os_disk {
@@ -65,9 +82,4 @@ resource "azurerm_linux_virtual_machine" "web" {
 
 output "ip_publico" {
   value = azurerm_public_ip.vm.ip_address
-}
-
-variable "tamanho" {
-  type    = string
-  default = "Standard_B2ats_v2"
 }
