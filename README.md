@@ -10,7 +10,7 @@ Cada lab é criado do zero com código, testado, documentado com evidências e d
 |---|---|---|---|
 | 1 | [VNet segmentada + VM com SSH restrito](lab1-vnet-vm/) | Terraform, VNet, Subnets, NSG, VM Linux, SSH com chave | ✅ Concluído |
 | 2 | [State remoto + CI/CD sem senhas](lab2-state-oidc-cicd/) | Azure Storage, GitHub Actions, OIDC, Managed Identity, RBAC | ✅ Concluído |
-| 3 | Rede híbrida: homelab ↔ Azure por VPN | VNet, VPN/WireGuard, rotas | 🔜 Em breve |
+| 3 | [Rede híbrida homelab ↔ Azure com WireGuard](lab3-vpn-hibrida/) | VNet, NVA, WireGuard, UDR, NSG, cloud-init | ✅ Concluído |
 | 4 | Servidor on-premises gerenciado pelo Azure Arc | Azure Arc, Azure Monitor, Policy | 🔜 Em breve |
 
 ## Ferramentas

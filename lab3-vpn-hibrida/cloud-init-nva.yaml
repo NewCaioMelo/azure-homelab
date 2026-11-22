@@ -1,0 +1,28 @@
+#cloud-config
+package_update: true
+packages:
+  - wireguard
+
+write_files:
+  - path: /etc/sysctl.d/99-encaminhamento.conf
+    content: |
+      net.ipv4.ip_forward=1
+
+runcmd:
+  - sysctl --system
+  - sh -c 'umask 077; wg genkey > /etc/wireguard/server.key'
+  - sh -c 'wg pubkey < /etc/wireguard/server.key > /etc/wireguard/server.pub'
+  - |
+    cat > /etc/wireguard/wg0.conf <<EOT
+    [Interface]
+    Address = 10.99.0.1/24
+    ListenPort = 51820
+    PrivateKey = $(cat /etc/wireguard/server.key)
+
+    [Peer]
+    # servidor do homelab
+    PublicKey = ${home_public_key}
+    AllowedIPs = 10.99.0.2/32, ${home_cidr}
+    EOT
+  - chmod 600 /etc/wireguard/wg0.conf
+  - systemctl enable --now wg-quick@wg0

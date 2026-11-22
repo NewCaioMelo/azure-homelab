@@ -1,0 +1,12 @@
+# /etc/wireguard/wg-azure.conf no servidor de casa (Debian/OpenMediaVault)
+# Gere as chaves com: wg genkey | tee casa.key | wg pubkey > casa.pub
+[Interface]
+Address = 10.99.0.2/24
+PostUp = wg set %i private-key /etc/wireguard/casa.key
+
+[Peer]
+# Chave pública da NVA: sudo cat /etc/wireguard/server.pub (na vm-nva)
+PublicKey = <CHAVE_PUBLICA_DA_NVA>
+Endpoint = <IP_PUBLICO_DA_NVA>:51820
+AllowedIPs = 10.99.0.0/24, 10.20.0.0/16
+PersistentKeepalive = 25
