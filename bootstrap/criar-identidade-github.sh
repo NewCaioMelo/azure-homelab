@@ -23,16 +23,23 @@ PRINCIPAL_ID=$(az identity show -n "$ID_NAME" -g "$RG" --query principalId -o ts
 SUB_ID=$(az account show --query id -o tsv)
 TENANT_ID=$(az account show --query tenantId -o tsv)
 
+# O GitHub passou a emitir o "subject" do token com os IDs imutáveis do dono e do
+# repositório (repo:dono@ID/repo@ID:...). Montamos o prefixo no mesmo formato.
+OWNER="${REPO%%/*}"; NAME="${REPO##*/}"
+OWNER_ID=$(gh api "users/$OWNER" -q .id)
+REPO_ID=$(gh api "repos/$REPO" -q .id)
+SUBJ="repo:${OWNER}@${OWNER_ID}/${NAME}@${REPO_ID}"
+
 echo ">> Federated credentials (quem pode usar a identidade)"
 az identity federated-credential create -n github-main \
   --identity-name "$ID_NAME" -g "$RG" --issuer "$ISSUER" --audiences "$AUDIENCE" \
-  --subject "repo:${REPO}:ref:refs/heads/main" -o none
+  --subject "${SUBJ}:ref:refs/heads/main" -o none
 az identity federated-credential create -n github-pr \
   --identity-name "$ID_NAME" -g "$RG" --issuer "$ISSUER" --audiences "$AUDIENCE" \
-  --subject "repo:${REPO}:pull_request" -o none
+  --subject "${SUBJ}:pull_request" -o none
 az identity federated-credential create -n github-env-lab \
   --identity-name "$ID_NAME" -g "$RG" --issuer "$ISSUER" --audiences "$AUDIENCE" \
-  --subject "repo:${REPO}:environment:lab" -o none
+  --subject "${SUBJ}:environment:lab" -o none
 
 echo ">> Aguardando a identidade propagar (30s)"
 sleep 30
